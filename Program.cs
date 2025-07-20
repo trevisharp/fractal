@@ -32,7 +32,7 @@ form.Paint += (o, e) =>
     g.DrawLines(pen, [ ..points ]);
 };
 
-form.Load += (o, e) => Show(KochFractal(), 1, 100);
+form.Load += (o, e) => Show(KochFractal(), 2, 100);
 
 Application.Run(form);
 
@@ -71,41 +71,47 @@ List<PointF> MakeFractal(Fractal fractal, int deep, int points)
     return fractalPoints;
 }
 
-(double x, double y) ComputePoint(double p, Fractal fractal, int deep)
+(double x, double y) ComputePoint(double x, Fractal fractal, int deep)
 {
     Face crrFace = (0.0, 0.0, 1.0, 0.0);
 
     while (deep > 0)
     {
-        (crrFace, p) = FindFace(fractal, crrFace, p);
+        (crrFace, x) = FindFace(fractal, crrFace, x);
         deep--;
     }
 
-    return GetPoint(crrFace, p);
+    return GetPoint(crrFace, x);
 }
 
-(Face face, double p) FindFace(Fractal fractal, Face face, double p)
+(Face face, double x) FindFace(Fractal fractal, Face face, double x)
 {
     var bx = face.ex - face.sx;
     var by = face.ey - face.sy;
+    var mod = Math.Sqrt(bx * bx + by * by);
+    bx /= mod;
+    by /= mod;
 
     var hx = -by;
     var hy = bx;
 
     for (int i = 0; i < fractal.Count - 1; i++)
     {
-        if (fractal[i].x <= p && p <= fractal[i + 1].x)
-        {
-            var newFace = (
-                fractal[i].x * bx,
-                fractal[i].y * hx,
-                fractal[i + 1].x * bx,
-                fractal[i + 1].y * hy
-            );
-            var prop = p - fractal[i].x; // FIX
+        var (x0, y0) = fractal[i];
+        var (xf, yf) = fractal[i + 1];
 
-            return (newFace, prop);
-        }
+        if (x > xf || x < x0)
+            continue;
+
+        Face newFace = (
+            x0 * bx + y0 * by,
+            x0 * hx + y0 * hy,
+            xf * bx + yf * by,
+            xf * hx + yf * hy
+        );
+        var prop = (x - x0) / (xf - x0);
+
+        return (newFace, prop);
     }
 
     throw new Exception("Out of fractal");
