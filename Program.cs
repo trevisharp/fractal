@@ -23,7 +23,7 @@ form.KeyDown += (o, e) =>
     switch (e.KeyCode)
     {
         case Keys.W:
-            deep = int.Min(8, deep + 1);
+            deep = int.Min(12, deep + 1);
             break;
 
         case Keys.S:
@@ -45,7 +45,7 @@ form.Paint += (o, e) =>
     if (points.Count < 2)
         return;
     
-    var pen = new Pen(Brushes.White, 2f);
+    var pen = new Pen(Brushes.White, 0.5f);
     g.DrawLines(pen, [ ..points ]);
 };
 
@@ -71,9 +71,9 @@ void Update()
     double x3 = 2.5 * step;
     double y3 = (Math.Sqrt(1.25) + 1) * step;
 
-    var p1 = MakeFractal(KochFractal(), (x2, y2, x1, y1), deep, 10_000);
-    var p2 = MakeFractal(KochFractal(), (x1, y1, x3, y3), deep, 10_000);
-    var p3 = MakeFractal(KochFractal(), (x3, y3, x2, y2), deep, 10_000);
+    var p1 = MakeFractal(KochFractal(), (x2, y2, x1, y1), deep, 16_000);
+    var p2 = MakeFractal(KochFractal(), (x1, y1, x3, y3), deep, 16_000);
+    var p3 = MakeFractal(KochFractal(), (x3, y3, x2, y2), deep, 16_000);
 
     Show([..p1, ..p2, ..p3]);
 }
