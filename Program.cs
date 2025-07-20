@@ -3,6 +3,7 @@ using Face = (double sx, double sy, double ex, double ey);
 
 ApplicationConfiguration.Initialize();
 
+int deep = 0;
 List<PointF> points = [];
 
 var form = new Form {
@@ -18,6 +19,22 @@ form.KeyDown += (o, e) =>
         Application.Exit();
         return;
     }
+
+    switch (e.KeyCode)
+    {
+        case Keys.W:
+            deep = int.Min(8, deep + 1);
+            break;
+
+        case Keys.S:
+            deep = int.Max(0, deep - 1);
+            break;
+        
+        default:
+            return;
+    }
+
+    Update();
 };
 
 form.Paint += (o, e) =>
@@ -32,27 +49,39 @@ form.Paint += (o, e) =>
     g.DrawLines(pen, [ ..points ]);
 };
 
-form.Load += (o, e) => Show(KochFractal(), 2, 100);
+form.Load += (o, e) => Update();
 
 Application.Run(form);
 
-Fractal KochFractal()
-    => [ (0, 0), (0.25, 0), (0.5, 1.0), (0.75, 0), (1, 0) ];
-
-void Show(Fractal fractal, int deep, int ptCount)
+void Show(List<PointF> pts)
 {
-    var points = MakeFractal(fractal, deep, ptCount);
-    SetPoits(points, form.Width, form.Height);
-}
-
-void SetPoits(List<PointF> fracPoints, int widht, int height)
-{
-    points = fracPoints
-        .Select(pt => new PointF(20 + pt.X * (widht - 40), height - 20 - pt.Y * (height - 40)))
+    points = pts
+        .Select(p => new PointF(p.X, form.Height - p.Y))
         .ToList();
+    form.Invalidate();
 }
 
-List<PointF> MakeFractal(Fractal fractal, int deep, int points)
+void Update()
+{
+    double step = form.Width / 5;
+    double x1 = 2 * step;
+    double y1 = step;
+    double x2 = 3 * step;
+    double y2 = step;
+    double x3 = 2.5 * step;
+    double y3 = (Math.Sqrt(1.25) + 1) * step;
+
+    var p1 = MakeFractal(KochFractal(), (x2, y2, x1, y1), deep, 10_000);
+    var p2 = MakeFractal(KochFractal(), (x1, y1, x3, y3), deep, 10_000);
+    var p3 = MakeFractal(KochFractal(), (x3, y3, x2, y2), deep, 10_000);
+
+    Show([..p1, ..p2, ..p3]);
+}
+
+Fractal KochFractal()
+    => [ (0, 0), (0.25, 0), (0.5, 0.25), (0.75, 0), (1, 0) ];
+
+List<PointF> MakeFractal(Fractal fractal, Face initial, int deep, int points)
 {
     var point = 0;
     var x = 0.0;
@@ -61,7 +90,7 @@ List<PointF> MakeFractal(Fractal fractal, int deep, int points)
 
     while (point < points)
     {
-        var pt = ComputePoint(x, fractal, deep);
+        var pt = ComputePoint(x, fractal, deep, initial);
         fractalPoints.Add(new PointF((float)pt.x, (float)pt.y));
 
         point++;
@@ -71,9 +100,9 @@ List<PointF> MakeFractal(Fractal fractal, int deep, int points)
     return fractalPoints;
 }
 
-(double x, double y) ComputePoint(double x, Fractal fractal, int deep)
+(double x, double y) ComputePoint(double x, Fractal fractal, int deep, Face initial)
 {
-    Face crrFace = (0.0, 0.0, 1.0, 0.0);
+    Face crrFace = initial;
 
     while (deep > 0)
     {
@@ -104,10 +133,10 @@ List<PointF> MakeFractal(Fractal fractal, int deep, int points)
             continue;
 
         Face newFace = (
-            x0 * bx + y0 * by,
-            x0 * hx + y0 * hy,
-            xf * bx + yf * by,
-            xf * hx + yf * hy
+            face.sx + mod * (x0 * bx + y0 * hx),
+            face.sy + mod * (x0 * by + y0 * hy),
+            face.sx + mod * (xf * bx + yf * hx),
+            face.sy + mod * (xf * by + yf * hy)
         );
         var prop = (x - x0) / (xf - x0);
 
